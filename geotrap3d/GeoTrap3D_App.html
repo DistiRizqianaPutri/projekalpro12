@@ -1,0 +1,1519 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>GeoTrap 3D — Platform Pembelajaran & Asesmen Literasi Matematika SMP</title>
+  <!-- Google Fonts: Plus Jakarta Sans & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Three.js CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <!-- Supabase JS CDN (Opsional Cloud Sync) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    canvas { touch-action: none; display: block; }
+    body { background-color: #EEF2F6; }
+    .app-shell {
+      box-shadow: 0 20px 50px -12px rgba(15, 23, 42, 0.12);
+    }
+    /* Custom subtle scrollbar */
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 9999px; }
+    /* Smooth range slider */
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      height: 18px;
+      width: 18px;
+      border-radius: 50%;
+      background: #D97706;
+      border: 2px solid #FFFFFF;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body class="text-slate-800 antialiased select-none">
+
+  <!-- CONTAINER UTAMA (Mobile-First Android Portrait Frame) -->
+  <div id="app" class="app-shell min-h-screen max-w-md mx-auto bg-white flex flex-col relative overflow-hidden">
+
+    <!-- ========================================================= -->
+    <!-- LAYAR 1: LOGIN KODE SISWA                                 -->
+    <!-- ========================================================= -->
+    <div id="screen-login" class="flex-1 flex flex-col justify-between px-6 py-8 bg-gradient-to-b from-slate-50 via-white to-blue-50/30">
+      <div class="pt-4">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 border border-blue-100 text-blue-700 text-[11px] font-bold tracking-wide uppercase mb-6">
+          <span class="w-2 h-2 rounded-full bg-blue-600 animate-pulse"></span>
+          Media Pembelajaran Interaktif 3D
+        </div>
+
+        <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white flex items-center justify-center shadow-lg shadow-blue-600/20 mb-5">
+          <svg class="w-8 h-8" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21 7.5l-9-5.25L3 7.5m18 0l-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9" />
+          </svg>
+        </div>
+
+        <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">GeoTrap 3D</h1>
+        <p class="text-sm text-slate-500 mt-2 leading-relaxed">
+          Eksplorasi keliling & luas <span class="font-semibold text-slate-700">persegi panjang</span> serta <span class="font-semibold text-slate-700">trapesium</span> untuk meningkatkan kemampuan <span class="font-semibold text-blue-600">Literasi Matematika</span>.
+        </p>
+      </div>
+
+      <form id="login-form" class="space-y-4 my-6">
+        <div class="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-sm space-y-3">
+          <label for="input-student-code" class="block text-xs font-bold uppercase tracking-wider text-slate-500">
+            Kode Identitas Siswa
+          </label>
+          <input
+            type="text"
+            id="input-student-code"
+            placeholder="Ketik kode (misal: S01)"
+            required
+            class="w-full px-4 py-3.5 text-lg font-mono font-bold uppercase tracking-widest bg-slate-50 border-2 border-slate-200 rounded-xl focus:bg-white focus:border-blue-600 focus:outline-none transition"
+          />
+          <p class="text-[11px] text-slate-400">
+            Tanpa email atau kata sandi. Gunakan kode dari guru/peneliti.
+          </p>
+        </div>
+
+        <button
+          type="submit"
+          class="w-full py-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 active:scale-[0.99] text-white font-bold rounded-2xl shadow-md shadow-blue-600/20 transition flex items-center justify-center gap-2 text-sm"
+        >
+          <span>Masuk ke Ruang Belajar</span>
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+          </svg>
+        </button>
+      </form>
+
+      <div class="p-3.5 rounded-2xl bg-slate-100/80 border border-slate-200/70 flex items-center justify-between text-xs text-slate-600">
+        <span>Kode Uji Coba Cepat:</span>
+        <button
+          type="button"
+          onclick="quickFillCode('S01')"
+          class="font-mono font-bold px-3 py-1 bg-white border border-slate-300 rounded-lg text-blue-700 hover:bg-blue-50 transition"
+        >
+          S01
+        </button>
+      </div>
+    </div>
+
+    <!-- ========================================================= -->
+    <!-- LAYAR 2: DASHBOARD ALUR PENELITIAN (PRE -> BELAJAR -> POST) -->
+    <!-- ========================================================= -->
+    <div id="screen-dashboard" class="hidden flex-1 flex flex-col bg-slate-50">
+      <!-- Top Bar -->
+      <header class="bg-white px-5 py-4 border-b border-slate-200/80 flex items-center justify-between sticky top-0 z-20">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center font-bold text-sm shadow-sm">
+            3D
+          </div>
+          <div>
+            <h1 class="font-extrabold text-slate-900 text-sm leading-tight">GeoTrap 3D</h1>
+            <p class="text-[11px] text-slate-500">Alur Belajar & Evaluasi</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <span id="badge-student-code" class="px-3 py-1 bg-blue-50 text-blue-700 font-mono text-xs font-bold rounded-full border border-blue-200">
+            S01
+          </span>
+          <button onclick="logoutStudent()" title="Ganti Kode Siswa" class="p-1.5 text-slate-400 hover:text-slate-700 rounded-lg">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
+            </svg>
+          </button>
+        </div>
+      </header>
+
+      <main class="p-4 space-y-5 flex-1 overflow-y-auto">
+        <!-- Ringkasan Skor Pre-Test vs Post-Test (N-Gain Preview) -->
+        <div class="bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-950 text-white p-4 rounded-2xl shadow-md">
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-indigo-300">
+              Progres Literasi Matematika
+            </span>
+            <span id="badge-gain-status" class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-white/10 text-slate-200">
+              Tahap Awal
+            </span>
+          </div>
+          <div class="grid grid-cols-3 gap-2 text-center">
+            <div class="bg-white/10 rounded-xl p-2.5 backdrop-blur-sm">
+              <p class="text-[10px] text-slate-300 uppercase font-semibold">Pre-Test</p>
+              <p id="stat-pretest-score" class="text-xl font-extrabold font-mono mt-0.5">—</p>
+            </div>
+            <div class="bg-white/10 rounded-xl p-2.5 backdrop-blur-sm">
+              <p class="text-[10px] text-slate-300 uppercase font-semibold">Post-Test</p>
+              <p id="stat-posttest-score" class="text-xl font-extrabold font-mono mt-0.5">—</p>
+            </div>
+            <div class="bg-emerald-500/20 border border-emerald-400/30 rounded-xl p-2.5">
+              <p class="text-[10px] text-emerald-200 uppercase font-semibold">Peningkatan</p>
+              <p id="stat-gain-score" class="text-xl font-extrabold font-mono text-emerald-300 mt-0.5">—</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAHAP 1: PRE-TEST DIAGNOSTIK -->
+        <section class="space-y-2">
+          <div class="flex items-center justify-between px-1">
+            <h2 class="text-xs font-extrabold uppercase tracking-wider text-slate-500">
+              Tahap 1 • Asesmen Awal
+            </h2>
+            <span id="status-pretest-pill" class="text-[11px] font-semibold text-amber-600">Wajib Dikerjakan</span>
+          </div>
+
+          <button
+            onclick="startAssessment('pretest')"
+            class="w-full text-left bg-white p-4 rounded-2xl border-2 border-amber-200/80 hover:border-amber-400 shadow-sm transition active:scale-[0.99] flex items-center justify-between gap-3"
+          >
+            <div class="flex items-start gap-3">
+              <div class="w-10 h-10 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center shrink-0 font-bold text-sm">
+                PRE
+              </div>
+              <div>
+                <h3 class="font-bold text-slate-900 text-sm">Pre-Test Literasi Matematika</h3>
+                <p class="text-xs text-slate-500 mt-0.5 leading-snug">
+                  5 soal diagnostik awal tanpa bantuan visual 3D (Formulate, Employ, Interpret).
+                </p>
+              </div>
+            </div>
+            <span class="text-amber-600 font-bold text-sm shrink-0">Mulai →</span>
+          </button>
+        </section>
+
+        <!-- TAHAP 2: EKSPLORASI INTERAKTIF 3D (COGNITIVE LOAD MANAGED) -->
+        <section class="space-y-2.5">
+          <div class="flex items-center justify-between px-1">
+            <h2 class="text-xs font-extrabold uppercase tracking-wider text-slate-500">
+              Tahap 2 • Eksplorasi Media 3D
+            </h2>
+            <span class="text-[11px] text-slate-400">Bertahap (3 Modul)</span>
+          </div>
+
+          <div id="modules-list" class="space-y-2.5">
+            <!-- Dirender dinamis oleh JS -->
+          </div>
+        </section>
+
+        <!-- TAHAP 3: POST-TEST EVALUASI -->
+        <section class="space-y-2 pb-2">
+          <div class="flex items-center justify-between px-1">
+            <h2 class="text-xs font-extrabold uppercase tracking-wider text-slate-500">
+              Tahap 3 • Evaluasi Akhir
+            </h2>
+            <span id="status-posttest-pill" class="text-[11px] font-semibold text-indigo-600">Setelah Belajar</span>
+          </div>
+
+          <button
+            onclick="startAssessment('posttest')"
+            class="w-full text-left bg-white p-4 rounded-2xl border-2 border-indigo-200/80 hover:border-indigo-500 shadow-sm transition active:scale-[0.99] flex items-center justify-between gap-3"
+          >
+            <div class="flex items-start gap-3">
+              <div class="w-10 h-10 rounded-xl bg-indigo-100 text-indigo-700 flex items-center justify-center shrink-0 font-bold text-sm">
+                POST
+              </div>
+              <div>
+                <h3 class="font-bold text-slate-900 text-sm">Post-Test Literasi Matematika</h3>
+                <p class="text-xs text-slate-500 mt-0.5 leading-snug">
+                  5 soal evaluasi setara untuk mengukur peningkatan pemahaman setelah eksplorasi 3D.
+                </p>
+              </div>
+            </div>
+            <span class="text-indigo-600 font-bold text-sm shrink-0">Mulai →</span>
+          </button>
+        </section>
+      </main>
+
+      <!-- Footer Export Data Penelitian -->
+      <footer class="p-4 bg-white border-t border-slate-200/80">
+        <button
+          onclick="exportAllResearchCSV()"
+          class="w-full py-3 px-4 bg-emerald-600 hover:bg-emerald-700 active:scale-[0.99] text-white text-xs font-bold rounded-xl shadow-sm transition flex items-center justify-center gap-2"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+          </svg>
+          <span>Unduh Rekap Pre-Test, Latihan & Post-Test (.CSV)</span>
+        </button>
+        <p id="record-count-label" class="text-[11px] text-center text-slate-400 mt-1.5">
+          0 rekaman aktivitas tersimpan
+        </p>
+      </footer>
+    </div>
+
+    <!-- ========================================================= -->
+    <!-- LAYAR 3: PRE-TEST & POST-TEST ENGINE                      -->
+    <!-- ========================================================= -->
+    <div id="screen-assessment" class="hidden flex-1 flex flex-col bg-slate-50">
+      <!-- Header Tes -->
+      <header class="bg-white px-4 py-3 border-b border-slate-200 flex items-center justify-between sticky top-0 z-20">
+        <button onclick="backToDashboard()" class="text-xs font-bold text-slate-500 hover:text-slate-900 flex items-center gap-1">
+          ← Batal
+        </button>
+        <div class="text-center">
+          <span id="test-title-badge" class="text-xs font-extrabold uppercase tracking-wider px-3 py-1 rounded-full bg-amber-100 text-amber-800">
+            PRE-TEST
+          </span>
+        </div>
+        <span id="test-progress-text" class="font-mono text-xs font-bold text-slate-700">
+          1 / 5
+        </span>
+      </header>
+
+      <!-- Progress Bar -->
+      <div class="w-full h-1.5 bg-slate-200">
+        <div id="test-progress-bar" class="h-full bg-blue-600 transition-all duration-300" style="width: 20%"></div>
+      </div>
+
+      <!-- Konten Soal Tes -->
+      <main id="test-question-container" class="p-4 flex-1 overflow-y-auto space-y-4">
+        <!-- Dirender dinamis oleh JS -->
+      </main>
+
+      <!-- Navigasi Bawah Tes -->
+      <footer id="test-footer-nav" class="p-4 bg-white border-t border-slate-200 flex items-center justify-between gap-3">
+        <button
+          id="btn-test-prev"
+          onclick="prevTestQuestion()"
+          class="px-4 py-3 rounded-xl border border-slate-300 text-slate-700 text-xs font-bold disabled:opacity-40"
+        >
+          ← Sebelumnya
+        </button>
+        <button
+          id="btn-test-next"
+          onclick="nextTestQuestion()"
+          class="flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-sm transition"
+        >
+          Soal Berikutnya →
+        </button>
+      </footer>
+    </div>
+
+    <!-- ========================================================= -->
+    <!-- LAYAR 4: EKSPLORASI 3D INTERAKTIF (COGNITIVE LOAD)        -->
+    <!-- ========================================================= -->
+    <div id="screen-workspace" class="hidden flex-1 flex flex-col bg-white">
+      <header class="px-4 py-2.5 border-b border-slate-200 flex items-center justify-between bg-white sticky top-0 z-10">
+        <button onclick="backToDashboard()" class="text-xs font-bold text-slate-600 hover:text-slate-900">
+          ← Beranda
+        </button>
+        <span id="label-literacy-process" class="text-[11px] font-bold px-2.5 py-1 bg-blue-50 text-blue-700 rounded-full border border-blue-100">
+          Employ
+        </span>
+        <span id="workspace-student-code" class="font-mono text-xs font-bold text-slate-700">
+          S01
+        </span>
+      </header>
+
+      <!-- KANVAS 3D THREE.JS (42% Layar Atas) -->
+      <section class="bg-slate-50 border-b border-slate-200 flex flex-col">
+        <div class="relative w-full h-[245px]">
+          <div id="threejs-container" class="w-full h-full cursor-grab active:cursor-grabbing"></div>
+          <span class="absolute top-2.5 left-3 text-[10px] font-semibold bg-white/90 backdrop-blur px-2.5 py-1 rounded-full text-slate-500 border border-slate-200/80 shadow-xs pointer-events-none">
+            Sentuh & geser untuk memutar 3D
+          </span>
+        </div>
+
+        <!-- Kontrol Visual Anti-Clutter -->
+        <div class="px-3 py-2 bg-white border-t border-slate-100 flex flex-wrap items-center justify-between gap-1.5">
+          <button
+            id="btn-toggle-height"
+            onclick="toggleHeightLayer()"
+            class="text-xs px-2.5 py-1.5 rounded-lg font-semibold border bg-red-50 text-red-700 border-red-200 transition"
+          >
+            Garis Tinggi (t)
+          </button>
+
+          <button
+            id="btn-toggle-pythagoras"
+            onclick="togglePythagorasLayer()"
+            class="hidden text-xs px-2.5 py-1.5 rounded-lg font-semibold border bg-slate-50 text-slate-600 border-slate-200 transition"
+          >
+            Segitiga Pythagoras
+          </button>
+
+          <button
+            onclick="resetCameraAngle()"
+            class="text-xs px-2.5 py-1.5 rounded-lg font-semibold bg-slate-50 text-slate-600 border border-slate-200 hover:bg-slate-100"
+          >
+            Reset Sudut
+          </button>
+        </div>
+
+        <!-- Slider Pembuktian Rumus (Germane Load) -->
+        <div id="slider-transform-box" class="hidden px-4 py-2.5 bg-amber-50/90 border-t border-amber-200/70 flex items-center gap-3">
+          <span class="text-[11px] font-bold text-amber-900 whitespace-nowrap">
+            Ubah ke Persegi Panjang:
+          </span>
+          <input
+            type="range"
+            id="slider-slice"
+            min="0"
+            max="1"
+            step="0.02"
+            value="0"
+            oninput="updateSliceTransform(this.value)"
+            class="w-full accent-amber-600 h-1.5 bg-amber-200 rounded-lg cursor-pointer"
+          />
+        </div>
+      </section>
+
+      <!-- KARTU SOAL LITERASI MATEMATIKA RINGKAS -->
+      <section class="p-4 flex-1 space-y-4 overflow-y-auto">
+        <div class="bg-slate-50/90 p-4 rounded-2xl border border-slate-200/90 space-y-2.5">
+          <p id="q-context" class="text-sm text-slate-700 leading-snug"></p>
+
+          <div class="space-y-1.5 pt-2 border-t border-slate-200/80">
+            <p class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
+              Data Ukuran (Sesuai Warna Garis 3D):
+            </p>
+            <div id="q-known-data" class="space-y-1"></div>
+          </div>
+
+          <p id="q-prompt" class="text-sm font-bold text-slate-900 pt-1.5"></p>
+        </div>
+
+        <!-- Form Jawaban -->
+        <form id="answer-form" class="flex gap-2">
+          <div class="relative flex-1">
+            <input
+              type="number"
+              step="any"
+              id="input-answer"
+              placeholder="Ketik angka..."
+              required
+              class="w-full px-3.5 py-3 border-2 border-slate-200 rounded-xl font-mono font-bold text-base focus:border-blue-600 focus:outline-none"
+            />
+            <span id="q-unit" class="absolute right-3.5 top-3.5 text-xs font-bold text-slate-400">
+              cm²
+            </span>
+          </div>
+          <button
+            type="submit"
+            class="px-5 py-3 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-xl shadow-sm active:scale-[0.98]"
+          >
+            Periksa
+          </button>
+        </form>
+
+        <!-- Umpan Balik -->
+        <div id="feedback-box" class="hidden p-3.5 rounded-xl border text-xs leading-relaxed font-semibold"></div>
+
+        <!-- Refleksi Penalaran -->
+        <div id="reflection-box" class="hidden p-4 rounded-2xl bg-indigo-50/80 border border-indigo-200 space-y-2.5">
+          <p class="text-xs font-extrabold text-indigo-950">Refleksi Penalaran Literasi Matematika:</p>
+          <p id="reflection-prompt" class="text-xs text-indigo-900 leading-snug"></p>
+          <div id="reflection-options" class="space-y-1.5 pt-1"></div>
+          <button
+            onclick="backToDashboard()"
+            class="w-full mt-2 py-3 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl transition"
+          >
+            Selesai & Kembali ke Beranda →
+          </button>
+        </div>
+
+        <!-- Petunjuk Bertahap (Faded Scaffolding) -->
+        <div class="pt-1">
+          <button
+            id="btn-unlock-hint"
+            onclick="unlockNextHint()"
+            class="w-full py-2.5 px-4 rounded-xl border border-amber-300 bg-amber-50 hover:bg-amber-100 text-amber-900 text-xs font-bold transition"
+          >
+            Butuh Petunjuk Bertahap? (Buka Tahap 1 dari 3)
+          </button>
+          <div id="hints-container" class="mt-2.5 space-y-2"></div>
+        </div>
+      </section>
+    </div>
+
+  </div>
+
+  <!-- ========================================================= -->
+  <!-- JAVASCRIPT LOGIC: PRE-TEST, POST-TEST, MODUL & THREE.JS   -->
+  <!-- ========================================================= -->
+  <script>
+    // Konfigurasi Opsional Supabase
+    const SUPABASE_URL = "";
+    const SUPABASE_ANON_KEY = "";
+    let supabaseClient = null;
+    if (SUPABASE_URL && SUPABASE_ANON_KEY && window.supabase) {
+      supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    }
+
+    // ===========================================================
+    // 1. BANK SOAL PRE-TEST & POST-TEST (PARALEL & TERUKUR)
+    // Mengukur 3 Aspek Mathematical Literacy: Formulate, Employ, Interpret
+    // ===========================================================
+    const ASSESSMENTS = {
+      pretest: {
+        title: "PRE-TEST LITERASI MATEMATIKA",
+        badgeClass: "bg-amber-100 text-amber-800",
+        subtitle: "Kerjakan secara mandiri tanpa bantuan 3D untuk memetakan pemahaman awalmu.",
+        questions: [
+          {
+            id: "PRE-01",
+            process: "Formulate (Merumuskan)",
+            context: "Sebuah bingkai foto kayu berbentuk persegi panjang memiliki ukuran panjang 12 cm dan lebar 8 cm.",
+            prompt: "Jika sekeliling tepi bingkai akan dipasangi pita hias, berapakah panjang pita minimal yang diperlukan?",
+            svgDiagram: `
+              <svg viewBox="0 0 240 110" class="w-full h-28 mx-auto">
+                <rect x="45" y="20" width="150" height="70" fill="#FEF9C3" stroke="#2563EB" stroke-width="2.5" rx="2"/>
+                <text x="120" y="14" text-anchor="middle" font-size="11" font-weight="bold" fill="#1E293B">p = 12 cm</text>
+                <text x="203" y="58" text-anchor="start" font-size="11" font-weight="bold" fill="#DC2626">l = 8 cm</text>
+              </svg>
+            `,
+            options: ["20 cm", "40 cm", "96 cm", "48 cm"],
+            correctIndex: 1
+          },
+          {
+            id: "PRE-02",
+            process: "Employ (Menerapkan)",
+            context: "Selembar kertas lipat berbentuk trapesium memiliki dua sisi sejajar dengan panjang 7 cm dan 13 cm, serta tinggi 5 cm.",
+            prompt: "Berapakah luas permukaan kertas trapesium tersebut?",
+            svgDiagram: `
+              <svg viewBox="0 0 240 115" class="w-full h-28 mx-auto">
+                <polygon points="75,22 165,22 195,90 45,90" fill="#FEF9C3" stroke="#2563EB" stroke-width="2.5"/>
+                <line x1="75" y1="22" x2="75" y2="90" stroke="#DC2626" stroke-width="2" stroke-dasharray="4"/>
+                <polyline points="75,82 83,82 83,90" fill="none" stroke="#DC2626" stroke-width="1.5"/>
+                <text x="120" y="15" text-anchor="middle" font-size="11" font-weight="bold" fill="#2563EB">a = 7 cm</text>
+                <text x="120" y="105" text-anchor="middle" font-size="11" font-weight="bold" fill="#2563EB">b = 13 cm</text>
+                <text x="80" y="60" text-anchor="start" font-size="11" font-weight="bold" fill="#DC2626">t = 5 cm</text>
+              </svg>
+            `,
+            options: ["35 cm²", "50 cm²", "65 cm²", "100 cm²"],
+            correctIndex: 1
+          },
+          {
+            id: "PRE-03",
+            process: "Formulate & Employ (Prasyarat Tinggi)",
+            context: "Sebuah taman hias berbentuk trapesium sama kaki memiliki sisi sejajar atas 8 m, sisi sejajar bawah 14 m, dan sisi miring 5 m.",
+            prompt: "Berapakah luas taman hias tersebut?",
+            svgDiagram: `
+              <svg viewBox="0 0 240 115" class="w-full h-28 mx-auto">
+                <polygon points="80,22 160,22 195,90 45,90" fill="#FEF9C3" stroke="#2563EB" stroke-width="2.5"/>
+                <text x="120" y="15" text-anchor="middle" font-size="11" font-weight="bold" fill="#2563EB">8 m</text>
+                <text x="120" y="105" text-anchor="middle" font-size="11" font-weight="bold" fill="#2563EB">14 m</text>
+                <text x="53" y="54" text-anchor="end" font-size="11" font-weight="bold" fill="#059669">5 m</text>
+                <text x="187" y="54" text-anchor="start" font-size="11" font-weight="bold" fill="#059669">5 m</text>
+              </svg>
+            `,
+            options: ["44 m²", "55 m²", "32 m²", "88 m²"],
+            correctIndex: 0
+          },
+          {
+            id: "PRE-04",
+            process: "Employ (Konteks Gabungan)",
+            context: "Sebuah lantai ruang kelas berbentuk persegi panjang berukuran 8 m × 6 m akan ditutup ubin. Di salah satu sudut terdapat panggung kecil berbentuk trapesium dengan sisi sejajar 2 m dan 4 m serta tinggi 2 m yang tidak perlu diubin.",
+            prompt: "Berapakah luas lantai yang akan dipasangi ubin?",
+            svgDiagram: null,
+            options: ["48 m²", "42 m²", "36 m²", "54 m²"],
+            correctIndex: 1
+          },
+          {
+            id: "PRE-05",
+            process: "Interpret & Evaluate (Menafsirkan)",
+            context: "Rina menghitung luas trapesium sama kaki (sisi sejajar 6 cm dan 10 cm, sisi miring 5 cm, tinggi 4 cm) dengan cara mengalikan rata-rata sisi sejajar dengan sisi miring: ((6 + 10) : 2) × 5 = 40 cm².",
+            prompt: "Manakah pernyataan evaluasi yang paling tepat terhadap langkah Rina?",
+            svgDiagram: null,
+            options: [
+              "Benar, karena sisi miring dan tinggi memiliki fungsi yang sama dalam luas",
+              "Salah, seharusnya dikalikan tinggi 4 cm (hasil 32 cm²) karena luas diukur tegak lurus antar sisi sejajar",
+              "Salah, seharusnya semua sisi dijumlahkan saja (6 + 10 + 5 + 5 = 26 cm²)",
+              "Benar, asalkan trapesiumnya sama kaki"
+            ],
+            correctIndex: 1
+          }
+        ]
+      },
+      posttest: {
+        title: "POST-TEST LITERASI MATEMATIKA",
+        badgeClass: "bg-indigo-100 text-indigo-800",
+        subtitle: "Evaluasi akhir setelah menggunakan GeoTrap 3D. Terapkan konsep yang telah kamu pelajari!",
+        questions: [
+          {
+            id: "POST-01",
+            process: "Formulate (Merumuskan)",
+            context: "Sebuah papan mading kelas berbentuk persegi panjang memiliki panjang 15 dm dan lebar 9 dm.",
+            prompt: "Jika sekeliling tepi papan mading akan dipasangi lis aluminium, berapa panjang lis minimal yang dibutuhkan?",
+            svgDiagram: `
+              <svg viewBox="0 0 240 110" class="w-full h-28 mx-auto">
+                <rect x="45" y="20" width="150" height="70" fill="#E0E7FF" stroke="#2563EB" stroke-width="2.5" rx="2"/>
+                <text x="120" y="14" text-anchor="middle" font-size="11" font-weight="bold" fill="#1E293B">p = 15 dm</text>
+                <text x="203" y="58" text-anchor="start" font-size="11" font-weight="bold" fill="#DC2626">l = 9 dm</text>
+              </svg>
+            `,
+            options: ["24 dm", "48 dm", "135 dm", "67,5 dm"],
+            correctIndex: 1
+          },
+          {
+            id: "POST-02",
+            process: "Employ (Menerapkan)",
+            context: "Sebuah ubin keramik dekoratif berbentuk trapesium memiliki dua sisi sejajar 8 cm dan 14 cm, serta jarak tegak lurus antar sisi sejajar (tinggi) 6 cm.",
+            prompt: "Berapakah luas permukaan satu ubin keramik tersebut?",
+            svgDiagram: `
+              <svg viewBox="0 0 240 115" class="w-full h-28 mx-auto">
+                <polygon points="75,22 165,22 195,90 45,90" fill="#E0E7FF" stroke="#2563EB" stroke-width="2.5"/>
+                <line x1="75" y1="22" x2="75" y2="90" stroke="#DC2626" stroke-width="2" stroke-dasharray="4"/>
+                <polyline points="75,82 83,82 83,90" fill="none" stroke="#DC2626" stroke-width="1.5"/>
+                <text x="120" y="15" text-anchor="middle" font-size="11" font-weight="bold" fill="#2563EB">a = 8 cm</text>
+                <text x="120" y="105" text-anchor="middle" font-size="11" font-weight="bold" fill="#2563EB">b = 14 cm</text>
+                <text x="80" y="60" text-anchor="start" font-size="11" font-weight="bold" fill="#DC2626">t = 6 cm</text>
+              </svg>
+            `,
+            options: ["44 cm²", "66 cm²", "84 cm²", "132 cm²"],
+            correctIndex: 1
+          },
+          {
+            id: "POST-03",
+            process: "Formulate & Employ (Prasyarat Tinggi)",
+            context: "Atap bagian depan sebuah gazebo berbentuk trapesium sama kaki dengan sisi sejajar atas 6 m, sisi sejajar bawah 18 m, dan panjang sisi miring 10 m.",
+            prompt: "Tentukan luas bagian atap gazebo berbentuk trapesium tersebut!",
+            svgDiagram: `
+              <svg viewBox="0 0 240 115" class="w-full h-28 mx-auto">
+                <polygon points="85,22 155,22 195,90 45,90" fill="#E0E7FF" stroke="#2563EB" stroke-width="2.5"/>
+                <text x="120" y="15" text-anchor="middle" font-size="11" font-weight="bold" fill="#2563EB">6 m</text>
+                <text x="120" y="105" text-anchor="middle" font-size="11" font-weight="bold" fill="#2563EB">18 m</text>
+                <text x="56" y="54" text-anchor="end" font-size="11" font-weight="bold" fill="#059669">10 m</text>
+                <text x="184" y="54" text-anchor="start" font-size="11" font-weight="bold" fill="#059669">10 m</text>
+              </svg>
+            `,
+            options: ["120 m²", "96 m²", "72 m²", "192 m²"],
+            correctIndex: 1
+          },
+          {
+            id: "POST-04",
+            process: "Employ (Konteks Gabungan)",
+            context: "Selembar karton persegi panjang berukuran 10 cm × 7 cm dipotong bagian dalamnya membentuk lubang trapesium dengan sisi sejajar 4 cm dan 6 cm serta tinggi 3 cm.",
+            prompt: "Berapakah luas sisa karton di luar lubang trapesium tersebut?",
+            svgDiagram: null,
+            options: ["70 cm²", "55 cm²", "40 cm²", "15 cm²"],
+            correctIndex: 1
+          },
+          {
+            id: "POST-05",
+            process: "Interpret & Evaluate (Menafsirkan)",
+            context: "Sebuah trapesium dipotong bagian segitiga siku-siku di ujung kanannya lalu digeser menempel ke sisi kiri hingga membentuk persegi panjang utuh dengan lebar sama dengan tinggi trapesium.",
+            prompt: "Kesimpulan matematis mana yang terbukti dari perubahan bentuk tersebut?",
+            svgDiagram: null,
+            options: [
+              "Keliling trapesium selalu sama dengan keliling persegi panjang baru",
+              "Luas trapesium sama dengan luas persegi panjang yang panjangnya merupakan rata-rata kedua sisi sejajar ((a + b) : 2)",
+              "Tinggi trapesium berubah menjadi lebih pendek saat digeser",
+              "Sisi miring trapesium menjadi panjang persegi panjang"
+            ],
+            correctIndex: 1
+          }
+        ]
+      }
+    };
+
+    // ===========================================================
+    // 2. DATA MODUL & BANK SOAL INTERAKTIF 3D
+    // ===========================================================
+    const MODULES = [
+      {
+        id: "mod-01",
+        slug: "persegi-panjang",
+        title: "1. Keliling & Luas Persegi Panjang",
+        badge: "Konsep Dasar",
+        description: "Memahami satuan luas dan keliling dengan visualisasi grid 3D."
+      },
+      {
+        id: "mod-02",
+        slug: "prasyarat-pythagoras",
+        title: "2. Bekal Mencari Tinggi Trapesium",
+        badge: "Prasyarat Penting",
+        description: "Menemukan tinggi tegak lurus (t) menggunakan segitiga siku-siku."
+      },
+      {
+        id: "mod-03",
+        slug: "trapesium-literasi",
+        title: "3. Literasi Matematika: Trapesium",
+        badge: "Tantangan Kontekstual",
+        description: "Menerapkan rumus keliling dan luas trapesium pada masalah nyata."
+      }
+    ];
+
+    const QUESTIONS = {
+      "persegi-panjang": {
+        question_id: "q-pp-01",
+        literacy_process: "Employ (Menerapkan)",
+        context_text: "Sebuah karton prakarya dipotong berbentuk persegi panjang.",
+        known_data: [
+          { label: "Panjang (p)", value: "10 cm", color: "#2563EB" },
+          { label: "Lebar (l)", value: "5 cm", color: "#DC2626" }
+        ],
+        question_prompt: "Berapakah luas permukaan karton tersebut (dalam cm²)?",
+        correct_answer: 50,
+        unit: "cm²",
+        three_js_params: {
+          shape: "rectangle",
+          topWidth: 10,
+          bottomWidth: 10,
+          height: 5,
+          hideHeightInitially: false,
+          allowSliceTransform: false
+        },
+        hints: [
+          { level: 1, text: "Perhatikan kotak satuan pada permukaan 3D. Luas adalah banyaknya persegi satuan yang menutupi bidang.", action: "NONE" },
+          { level: 2, text: "Kalikan sisi panjang (garis biru = 10 cm) dengan sisi lebar (garis merah = 5 cm).", action: "SHOW_HEIGHT" },
+          { level: 3, text: "Luas = p × l = 10 × 5 = 50 cm².", action: "SHOW_HEIGHT" }
+        ],
+        reflection: {
+          prompt: "Jika karton dipotong menjadi dua bagian sama besar, bagaimana luas total kedua potongan dibanding luas awal?",
+          options: [
+            "Tetap sama (50 cm²), karena tidak ada bagian karton yang terbuang",
+            "Bertambah besar karena jumlah sisinya bertambah",
+            "Berkurang setengahnya"
+          ],
+          correct_index: 0
+        }
+      },
+      "prasyarat-pythagoras": {
+        question_id: "q-trap-01",
+        literacy_process: "Formulate (Merumuskan)",
+        context_text: "Potongan papan kayu berbentuk trapesium sama kaki belum diketahui tingginya.",
+        known_data: [
+          { label: "Sisi sejajar atas (a)", value: "6 cm", color: "#2563EB" },
+          { label: "Sisi sejajar bawah (b)", value: "12 cm", color: "#2563EB" },
+          { label: "Sisi miring (c)", value: "5 cm", color: "#059669" }
+        ],
+        question_prompt: "Tentukan tinggi (t) trapesium tersebut (dalam cm) sebelum menghitung luasnya!",
+        correct_answer: 4,
+        unit: "cm",
+        three_js_params: {
+          shape: "trapezoid",
+          topWidth: 6,
+          bottomWidth: 12,
+          height: 4,
+          hideHeightInitially: true,
+          allowSliceTransform: true
+        },
+        hints: [
+          { level: 1, text: "Nyalakan tombol 'Segitiga Pythagoras' di bawah gambar 3D. Perhatikan segitiga siku-siku di sisi kanan!", action: "SHOW_PYTHAGORAS" },
+          { level: 2, text: "Alas segitiga siku-siku kecil di pinggir adalah (12 - 6) : 2 = 3 cm, dan sisi miringnya 5 cm.", action: "SHOW_PYTHAGORAS" },
+          { level: 3, text: "Gunakan Pythagoras: t = √(5² - 3²) = √(25 - 9) = √16 = 4 cm.", action: "SHOW_HEIGHT" }
+        ],
+        reflection: {
+          prompt: "Mengapa kita perlu mencari garis tinggi (t) yang tegak lurus (90°) dan tidak langsung memakai sisi miring 5 cm?",
+          options: [
+            "Karena jarak tegak lurus antar sisi sejajar adalah tinggi trapesium yang menentukan luas",
+            "Karena sisi miring hanya dipakai untuk menghitung keliling",
+            "Keduanya benar"
+          ],
+          correct_index: 2
+        }
+      },
+      "trapesium-literasi": {
+        question_id: "q-trap-02",
+        literacy_process: "Employ & Interpret",
+        context_text: "Sebuah taman sekolah berbentuk trapesium sama kaki akan ditanami rumput penuh.",
+        known_data: [
+          { label: "Sisi sejajar atas (a)", value: "6 m", color: "#2563EB" },
+          { label: "Sisi sejajar bawah (b)", value: "10 m", color: "#2563EB" },
+          { label: "Tinggi taman (t)", value: "4 m", color: "#DC2626" }
+        ],
+        question_prompt: "Berapakah luas rumput yang dibutuhkan untuk menutupi seluruh taman (dalam m²)?",
+        correct_answer: 32,
+        unit: "m²",
+        three_js_params: {
+          shape: "trapezoid",
+          topWidth: 6,
+          bottomWidth: 10,
+          height: 4,
+          hideHeightInitially: false,
+          allowSliceTransform: true
+        },
+        hints: [
+          { level: 1, text: "Coba geser slider 'Ubah ke Persegi Panjang' di bawah gambar 3D untuk melihat mengapa rumus luas trapesium bekerja!", action: "ANIMATE_SLICE" },
+          { level: 2, text: "Jumlahkan kedua sisi sejajar (a + b = 6 + 10), kalikan dengan tinggi (t = 4), lalu bagi 2.", action: "SHOW_HEIGHT" },
+          { level: 3, text: "Luas = ((6 + 10) × 4) : 2 = (16 × 4) : 2 = 64 : 2 = 32 m².", action: "SHOW_HEIGHT" }
+        ],
+        reflection: {
+          prompt: "Saat potongan segitiga trapesium digeser membentuk persegi panjang, panjang barunya adalah rata-rata dari 6 m dan 10 m, yaitu...",
+          options: [
+            "8 meter, sehingga 8 m × 4 m = 32 m²",
+            "16 meter, sehingga 16 m × 4 m = 64 m²",
+            "4 meter, sehingga 4 m × 4 m = 16 m²"
+          ],
+          correct_index: 0
+        }
+      }
+    };
+
+    // ===========================================================
+    // 3. STATE & STORAGE MANAGEMENT
+    // ===========================================================
+    let currentStudent = "";
+    let attemptLogs = JSON.parse(localStorage.getItem("geotrap_attempts") || "[]");
+    let testResults = JSON.parse(localStorage.getItem("geotrap_tests") || "{}");
+
+    // State Tes (Pre-Test / Post-Test)
+    let activeTestType = null; // 'pretest' | 'posttest'
+    let currentTestIdx = 0;
+    let userTestAnswers = [];
+    let testStartTime = Date.now();
+
+    // State Eksplorasi 3D
+    let activeQuestion = null;
+    let showHeight = true;
+    let showPythagoras = false;
+    let unlockedHintLevel = 0;
+    let startTime = Date.now();
+
+    function quickFillCode(code) {
+      document.getElementById("input-student-code").value = code;
+    }
+
+    function hideAllScreens() {
+      ["screen-login", "screen-dashboard", "screen-assessment", "screen-workspace"].forEach((id) => {
+        document.getElementById(id).classList.add("hidden");
+      });
+    }
+
+    document.getElementById("login-form").addEventListener("submit", function (e) {
+      e.preventDefault();
+      const code = document.getElementById("input-student-code").value.trim().toUpperCase();
+      if (!code) return;
+      currentStudent = code;
+      document.getElementById("badge-student-code").textContent = currentStudent;
+      document.getElementById("workspace-student-code").textContent = currentStudent;
+      backToDashboard();
+    });
+
+    function logoutStudent() {
+      currentStudent = "";
+      hideAllScreens();
+      document.getElementById("screen-login").classList.remove("hidden");
+    }
+
+    function backToDashboard() {
+      hideAllScreens();
+      document.getElementById("screen-dashboard").classList.remove("hidden");
+      renderDashboard();
+    }
+
+    function renderDashboard() {
+      // 1. Render Daftar Modul 3D
+      const container = document.getElementById("modules-list");
+      container.innerHTML = MODULES.map((m, idx) => {
+        const qId = QUESTIONS[m.slug].question_id;
+        const solved = attemptLogs.some(
+          (l) => l.student_code === currentStudent && l.question_id === qId && l.is_correct
+        );
+        return `
+          <button
+            onclick="openModule('${m.slug}')"
+            class="w-full text-left bg-white p-4 rounded-2xl border ${solved ? 'border-emerald-300 bg-emerald-50/20' : 'border-slate-200/90'} hover:border-blue-500 shadow-xs transition active:scale-[0.99]"
+          >
+            <div class="flex items-center justify-between mb-1.5">
+              <span class="text-[10px] font-bold px-2.5 py-0.5 rounded-full ${solved ? 'bg-emerald-100 text-emerald-800' : 'bg-blue-50 text-blue-700'}">
+                ${solved ? '✓ Selesai' : m.badge}
+              </span>
+              <span class="text-xs text-blue-600 font-bold">Eksplorasi 3D →</span>
+            </div>
+            <h3 class="font-bold text-slate-900 text-sm">${m.title}</h3>
+            <p class="text-xs text-slate-500 mt-1 leading-snug">${m.description}</p>
+          </button>
+        `;
+      }).join("");
+
+      // 2. Render Skor Pre-Test & Post-Test Siswa Aktif
+      const studentTests = testResults[currentStudent] || {};
+      const preScore = studentTests.pretest ? studentTests.pretest.score : null;
+      const postScore = studentTests.posttest ? studentTests.posttest.score : null;
+
+      document.getElementById("stat-pretest-score").textContent = preScore !== null ? preScore : "—";
+      document.getElementById("stat-posttest-score").textContent = postScore !== null ? postScore : "—";
+
+      const prePill = document.getElementById("status-pretest-pill");
+      if (preScore !== null) {
+        prePill.textContent = `Selesai (${preScore}/100)`;
+        prePill.className = "text-[11px] font-bold text-emerald-600";
+      } else {
+        prePill.textContent = "Wajib Dikerjakan";
+        prePill.className = "text-[11px] font-semibold text-amber-600";
+      }
+
+      const postPill = document.getElementById("status-posttest-pill");
+      if (postScore !== null) {
+        postPill.textContent = `Selesai (${postScore}/100)`;
+        postPill.className = "text-[11px] font-bold text-emerald-600";
+      } else {
+        postPill.textContent = "Setelah Belajar";
+        postPill.className = "text-[11px] font-semibold text-indigo-600";
+      }
+
+      const gainEl = document.getElementById("stat-gain-score");
+      const badgeEl = document.getElementById("badge-gain-status");
+      if (preScore !== null && postScore !== null) {
+        const diff = postScore - preScore;
+        gainEl.textContent = diff >= 0 ? `+${diff}` : `${diff}`;
+        badgeEl.textContent = diff > 0 ? "Meningkat" : "Terevaluasi";
+      } else {
+        gainEl.textContent = "—";
+        badgeEl.textContent = preScore !== null ? "Sedang Belajar" : "Tahap Awal";
+      }
+
+      const totalRecords = attemptLogs.length + Object.keys(testResults).length;
+      document.getElementById("record-count-label").textContent =
+        `${attemptLogs.length} latihan 3D & ${Object.keys(testResults).length} peserta tes tersimpan`;
+    }
+
+    // ===========================================================
+    // 4. LOGIKA PRE-TEST & POST-TEST
+    // ===========================================================
+    function startAssessment(type) {
+      activeTestType = type;
+      currentTestIdx = 0;
+      const qCount = ASSESSMENTS[type].questions.length;
+      userTestAnswers = new Array(qCount).fill(null);
+      testStartTime = Date.now();
+
+      hideAllScreens();
+      document.getElementById("screen-assessment").classList.remove("hidden");
+      document.getElementById("test-footer-nav").classList.remove("hidden");
+
+      const badge = document.getElementById("test-title-badge");
+      badge.textContent = ASSESSMENTS[type].title;
+      badge.className = `text-[11px] font-extrabold uppercase tracking-wider px-3 py-1 rounded-full ${ASSESSMENTS[type].badgeClass}`;
+
+      renderTestQuestion();
+    }
+
+    function renderTestQuestion() {
+      const testObj = ASSESSMENTS[activeTestType];
+      const q = testObj.questions[currentTestIdx];
+      const total = testObj.questions.length;
+
+      document.getElementById("test-progress-text").textContent = `${currentTestIdx + 1} / ${total}`;
+      document.getElementById("test-progress-bar").style.width = `${((currentTestIdx + 1) / total) * 100}%`;
+
+      const container = document.getElementById("test-question-container");
+      container.innerHTML = `
+        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600">
+              ${q.process}
+            </span>
+            <span class="font-mono text-[11px] text-slate-400">${q.id}</span>
+          </div>
+
+          <p class="text-sm text-slate-700 leading-relaxed">${q.context}</p>
+
+          ${q.svgDiagram ? `
+            <div class="bg-slate-50 border border-slate-200/80 rounded-xl p-2">
+              ${q.svgDiagram}
+            </div>
+          ` : ''}
+
+          <p class="text-sm font-bold text-slate-900 pt-1">${q.prompt}</p>
+        </div>
+
+        <div class="space-y-2">
+          ${q.options.map((opt, idx) => {
+            const isSelected = userTestAnswers[currentTestIdx] === idx;
+            const letter = ["A", "B", "C", "D"][idx];
+            return `
+              <button
+                type="button"
+                onclick="selectTestOption(${idx})"
+                class="w-full text-left p-3.5 rounded-2xl border-2 transition flex items-start gap-3 ${
+                  isSelected
+                    ? 'border-blue-600 bg-blue-50/70 text-blue-950 font-semibold shadow-xs'
+                    : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
+                }"
+              >
+                <span class="w-6 h-6 rounded-lg text-xs font-bold flex items-center justify-center shrink-0 ${
+                  isSelected ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-600'
+                }">${letter}</span>
+                <span class="text-xs leading-relaxed pt-0.5">${opt}</span>
+              </button>
+            `;
+          }).join("")}
+        </div>
+      `;
+
+      document.getElementById("btn-test-prev").disabled = currentTestIdx === 0;
+      const btnNext = document.getElementById("btn-test-next");
+      if (currentTestIdx === total - 1) {
+        btnNext.textContent = "Selesai & Lihat Hasil ✓";
+        btnNext.className = "flex-1 py-3 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-sm transition";
+      } else {
+        btnNext.textContent = "Soal Berikutnya →";
+        btnNext.className = "flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-sm transition";
+      }
+    }
+
+    function selectTestOption(optIdx) {
+      userTestAnswers[currentTestIdx] = optIdx;
+      renderTestQuestion();
+    }
+
+    function prevTestQuestion() {
+      if (currentTestIdx > 0) {
+        currentTestIdx--;
+        renderTestQuestion();
+      }
+    }
+
+    function nextTestQuestion() {
+      if (userTestAnswers[currentTestIdx] === null) {
+        alert("Pilih salah satu jawaban (A, B, C, atau D) terlebih dahulu.");
+        return;
+      }
+      const total = ASSESSMENTS[activeTestType].questions.length;
+      if (currentTestIdx < total - 1) {
+        currentTestIdx++;
+        renderTestQuestion();
+      } else {
+        finishAssessment();
+      }
+    }
+
+    async function finishAssessment() {
+      const questions = ASSESSMENTS[activeTestType].questions;
+      let correctCount = 0;
+      const itemBreakdown = questions.map((q, idx) => {
+        const isRight = userTestAnswers[idx] === q.correctIndex;
+        if (isRight) correctCount++;
+        return {
+          question_id: q.id,
+          process: q.process,
+          selected_index: userTestAnswers[idx],
+          is_correct: isRight
+        };
+      });
+
+      const score = Math.round((correctCount / questions.length) * 100);
+      const durationSec = Math.round((Date.now() - testStartTime) / 1000);
+
+      if (!testResults[currentStudent]) testResults[currentStudent] = {};
+      testResults[currentStudent][activeTestType] = {
+        timestamp: new Date().toISOString(),
+        score: score,
+        correct_count: correctCount,
+        total_questions: questions.length,
+        duration_sec: durationSec,
+        items: itemBreakdown
+      };
+      localStorage.setItem("geotrap_tests", JSON.stringify(testResults));
+
+      // Sinkronisasi opsional ke Supabase
+      if (supabaseClient) {
+        try {
+          await supabaseClient.from("student_assessments").insert([{
+            student_code: currentStudent,
+            test_type: activeTestType,
+            score: score,
+            correct_count: correctCount,
+            duration_sec: durationSec
+          }]);
+        } catch (err) {
+          console.warn("Supabase sync skipped:", err);
+        }
+      }
+
+      // Tampilkan Ringkasan Hasil Tes
+      document.getElementById("test-footer-nav").classList.add("hidden");
+      const preData = testResults[currentStudent].pretest;
+      const postData = testResults[currentStudent].posttest;
+
+      let comparisonHtml = "";
+      if (activeTestType === "posttest" && preData) {
+        const delta = score - preData.score;
+        const nGain = preData.score < 100
+          ? ((score - preData.score) / (100 - preData.score)).toFixed(2)
+          : "1.00";
+        comparisonHtml = `
+          <div class="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 space-y-2">
+            <p class="text-xs font-extrabold text-emerald-900 uppercase tracking-wider">Analisis Peningkatan (Pre vs Post)</p>
+            <div class="grid grid-cols-3 gap-2 text-center pt-1">
+              <div class="bg-white p-2 rounded-xl border border-emerald-100">
+                <p class="text-[10px] text-slate-500">Pre-Test</p>
+                <p class="font-mono font-bold text-slate-800">${preData.score}</p>
+              </div>
+              <div class="bg-white p-2 rounded-xl border border-emerald-100">
+                <p class="text-[10px] text-slate-500">Post-Test</p>
+                <p class="font-mono font-bold text-indigo-700">${score}</p>
+              </div>
+              <div class="bg-emerald-600 text-white p-2 rounded-xl">
+                <p class="text-[10px] text-emerald-100">N-Gain</p>
+                <p class="font-mono font-bold">${nGain}</p>
+              </div>
+            </div>
+            <p class="text-[11px] text-emerald-800 text-center pt-1">
+              Selisih skor: <strong>${delta >= 0 ? '+' + delta : delta} poin</strong>
+            </p>
+          </div>
+        `;
+      }
+
+      document.getElementById("test-question-container").innerHTML = `
+        <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm text-center space-y-3">
+          <span class="inline-block px-3 py-1 rounded-full text-xs font-bold ${ASSESSMENTS[activeTestType].badgeClass}">
+            ${ASSESSMENTS[activeTestType].title} SELESAI
+          </span>
+          <p class="text-xs text-slate-500">Skor Literasi Matematika Kamu (${currentStudent})</p>
+          <div class="text-5xl font-extrabold font-mono text-slate-900 py-1">${score}</div>
+          <p class="text-xs font-semibold text-slate-600">
+            Menjawab benar <strong>${correctCount}</strong> dari <strong>${questions.length}</strong> soal (${durationSec} detik)
+          </p>
+        </div>
+
+        ${comparisonHtml}
+
+        <div class="bg-white p-4 rounded-2xl border border-slate-200 space-y-2">
+          <p class="text-xs font-bold text-slate-800">Rincian Per Aspek Literasi Matematika:</p>
+          ${itemBreakdown.map((item, i) => `
+            <div class="flex items-center justify-between text-xs py-1.5 border-b border-slate-100 last:border-none">
+              <span class="text-slate-600">${i + 1}. ${item.process}</span>
+              <span class="font-bold ${item.is_correct ? 'text-emerald-600' : 'text-red-500'}">
+                ${item.is_correct ? '✓ Benar' : '✗ Perlu Latihan'}
+              </span>
+            </div>
+          `).join("")}
+        </div>
+
+        <button
+          onclick="backToDashboard()"
+          class="w-full py-4 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-2xl shadow-sm transition"
+        >
+          ${activeTestType === 'pretest' ? 'Lanjut ke Eksplorasi Media 3D →' : 'Kembali ke Beranda Utama →'}
+        </button>
+      `;
+    }
+
+    // ===========================================================
+    // 5. RUANG EKSPLORASI 3D & THREE.JS ENGINE
+    // ===========================================================
+    function openModule(slug) {
+      activeQuestion = QUESTIONS[slug];
+      if (!activeQuestion) return;
+
+      hideAllScreens();
+      document.getElementById("screen-workspace").classList.remove("hidden");
+
+      unlockedHintLevel = 0;
+      startTime = Date.now();
+      showHeight = !activeQuestion.three_js_params.hideHeightInitially;
+      showPythagoras = false;
+
+      document.getElementById("label-literacy-process").textContent = activeQuestion.literacy_process;
+      document.getElementById("q-context").textContent = activeQuestion.context_text;
+      document.getElementById("q-prompt").textContent = activeQuestion.question_prompt;
+      document.getElementById("q-unit").textContent = activeQuestion.unit;
+      document.getElementById("input-answer").value = "";
+
+      document.getElementById("q-known-data").innerHTML = activeQuestion.known_data.map((d) => `
+        <div class="flex items-center justify-between text-xs">
+          <span class="flex items-center gap-2 font-medium text-slate-700">
+            <span class="w-2.5 h-2.5 rounded-full inline-block" style="background-color: ${d.color}"></span>
+            ${d.label}
+          </span>
+          <span class="font-mono font-bold text-slate-900">${d.value}</span>
+        </div>
+      `).join("");
+
+      document.getElementById("feedback-box").classList.add("hidden");
+      document.getElementById("reflection-box").classList.add("hidden");
+      document.getElementById("hints-container").innerHTML = "";
+      const btnHint = document.getElementById("btn-unlock-hint");
+      btnHint.classList.remove("hidden");
+      btnHint.textContent = "Butuh Petunjuk Bertahap? (Buka Tahap 1 dari 3)";
+
+      const btnPyth = document.getElementById("btn-toggle-pythagoras");
+      const sliderBox = document.getElementById("slider-transform-box");
+      document.getElementById("slider-slice").value = 0;
+
+      if (activeQuestion.three_js_params.shape === "trapezoid") {
+        btnPyth.classList.remove("hidden");
+      } else {
+        btnPyth.classList.add("hidden");
+      }
+
+      if (activeQuestion.three_js_params.allowSliceTransform) {
+        sliderBox.classList.remove("hidden");
+      } else {
+        sliderBox.classList.add("hidden");
+      }
+
+      updateToggleButtonsUI();
+      initThreeJS(activeQuestion.three_js_params);
+    }
+
+    let threeState = {};
+
+    function initThreeJS(params) {
+      const container = document.getElementById("threejs-container");
+      container.innerHTML = "";
+
+      const width = container.clientWidth || 360;
+      const height = container.clientHeight || 245;
+
+      const scene = new THREE.Scene();
+      scene.background = new THREE.Color("#F8FAFC");
+
+      const camera = new THREE.PerspectiveCamera(40, width / height, 0.1, 100);
+      camera.position.set(0, -1.6, 13.5);
+      camera.lookAt(0, 0, 0);
+
+      const renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+      renderer.setSize(width, height);
+      container.appendChild(renderer.domElement);
+
+      const ambientLight = new THREE.AmbientLight(0xffffff, 0.88);
+      scene.add(ambientLight);
+      const dirLight = new THREE.DirectionalLight(0xffffff, 0.55);
+      dirLight.position.set(5, 8, 10);
+      scene.add(dirLight);
+
+      const rootGroup = new THREE.Group();
+      scene.add(rootGroup);
+
+      const scale = 0.65;
+      const topW = params.topWidth * scale;
+      const botW = params.bottomWidth * scale;
+      const h = params.height * scale;
+      const depth = 0.35;
+
+      const extrudeSettings = {
+        steps: 1,
+        depth: depth,
+        bevelEnabled: true,
+        bevelThickness: 0.03,
+        bevelSize: 0.03,
+        bevelSegments: 2
+      };
+
+      const mainMat = new THREE.MeshStandardMaterial({ color: "#FEF08A", roughness: 0.55 });
+      const sliceMat = new THREE.MeshStandardMaterial({ color: "#FDBA74", roughness: 0.55 });
+
+      let rightTriangleMesh = null;
+      const wing = (botW - topW) / 2;
+
+      if (params.shape === "rectangle") {
+        const rectShape = new THREE.Shape();
+        rectShape.moveTo(-botW / 2, -h / 2);
+        rectShape.lineTo(botW / 2, -h / 2);
+        rectShape.lineTo(botW / 2, h / 2);
+        rectShape.lineTo(-botW / 2, h / 2);
+        rectShape.closePath();
+
+        const geom = new THREE.ExtrudeGeometry(rectShape, extrudeSettings);
+        const mesh = new THREE.Mesh(geom, mainMat);
+        mesh.position.z = -depth / 2;
+        rootGroup.add(mesh);
+
+        const gridHelper = new THREE.GridHelper(
+          Math.max(botW, h),
+          Math.max(params.bottomWidth, params.height),
+          "#94A3B8",
+          "#CBD5E1"
+        );
+        gridHelper.rotation.x = Math.PI / 2;
+        gridHelper.position.z = depth / 2 + 0.04;
+        gridHelper.scale.set(botW / Math.max(botW, h), 1, h / Math.max(botW, h));
+        rootGroup.add(gridHelper);
+      } else {
+        const bodyShape = new THREE.Shape();
+        bodyShape.moveTo(-botW / 2, -h / 2);
+        bodyShape.lineTo(topW / 2, -h / 2);
+        bodyShape.lineTo(topW / 2, h / 2);
+        bodyShape.lineTo(-topW / 2, h / 2);
+        bodyShape.closePath();
+
+        const bodyGeom = new THREE.ExtrudeGeometry(bodyShape, extrudeSettings);
+        const bodyMesh = new THREE.Mesh(bodyGeom, mainMat);
+        bodyMesh.position.z = -depth / 2;
+        rootGroup.add(bodyMesh);
+
+        if (wing > 0.01) {
+          const triShape = new THREE.Shape();
+          triShape.moveTo(topW / 2, -h / 2);
+          triShape.lineTo(botW / 2, -h / 2);
+          triShape.lineTo(topW / 2, h / 2);
+          triShape.closePath();
+
+          const triGeom = new THREE.ExtrudeGeometry(triShape, extrudeSettings);
+          rightTriangleMesh = new THREE.Mesh(triGeom, sliceMat);
+          rightTriangleMesh.position.z = -depth / 2;
+          rootGroup.add(rightTriangleMesh);
+        }
+      }
+
+      const makeLine = (p1, p2, colorHex) => {
+        const pts = [new THREE.Vector3(...p1), new THREE.Vector3(...p2)];
+        const geo = new THREE.BufferGeometry().setFromPoints(pts);
+        const mat = new THREE.LineBasicMaterial({ color: colorHex });
+        return new THREE.Line(geo, mat);
+      };
+
+      const zFront = depth / 2 + 0.06;
+      rootGroup.add(makeLine([-topW / 2, h / 2, zFront], [topW / 2, h / 2, zFront], "#2563EB"));
+      rootGroup.add(makeLine([-botW / 2, -h / 2, zFront], [botW / 2, -h / 2, zFront], "#2563EB"));
+      rootGroup.add(makeLine([-botW / 2, -h / 2, zFront], [-topW / 2, h / 2, zFront], "#059669"));
+      rootGroup.add(makeLine([botW / 2, -h / 2, zFront], [topW / 2, h / 2, zFront], "#059669"));
+
+      const heightGroup = new THREE.Group();
+      const xH = params.shape === "rectangle" ? -botW / 2 : -topW / 2;
+      const sq = 0.25;
+      heightGroup.add(makeLine([xH, -h / 2, zFront + 0.02], [xH, h / 2, zFront + 0.02], "#DC2626"));
+      heightGroup.add(makeLine([xH, -h / 2 + sq, zFront + 0.02], [xH + sq, -h / 2 + sq, zFront + 0.02], "#DC2626"));
+      heightGroup.add(makeLine([xH + sq, -h / 2 + sq, zFront + 0.02], [xH + sq, -h / 2, zFront + 0.02], "#DC2626"));
+      heightGroup.visible = showHeight;
+      rootGroup.add(heightGroup);
+
+      const pythagorasGroup = new THREE.Group();
+      if (params.shape === "trapezoid" && wing > 0.01) {
+        pythagorasGroup.add(makeLine([topW / 2, -h / 2, zFront + 0.03], [topW / 2, h / 2, zFront + 0.03], "#7C3AED"));
+        pythagorasGroup.add(makeLine([topW / 2, -h / 2, zFront + 0.03], [botW / 2, -h / 2, zFront + 0.03], "#7C3AED"));
+        pythagorasGroup.add(makeLine([topW / 2 + sq, -h / 2, zFront + 0.03], [topW / 2 + sq, -h / 2 + sq, zFront + 0.03], "#7C3AED"));
+        pythagorasGroup.add(makeLine([topW / 2, -h / 2 + sq, zFront + 0.03], [topW / 2 + sq, -h / 2 + sq, zFront + 0.03], "#7C3AED"));
+      }
+      pythagorasGroup.visible = showPythagoras;
+      rootGroup.add(pythagorasGroup);
+
+      let isDragging = false, prevX = 0, prevY = 0;
+      renderer.domElement.addEventListener("pointerdown", (e) => {
+        isDragging = true;
+        prevX = e.clientX;
+        prevY = e.clientY;
+      });
+      window.addEventListener("pointermove", (e) => {
+        if (!isDragging) return;
+        rootGroup.rotation.y = Math.max(-0.85, Math.min(0.85, rootGroup.rotation.y + (e.clientX - prevX) * 0.01));
+        rootGroup.rotation.x = Math.max(-0.65, Math.min(0.65, rootGroup.rotation.x + (e.clientY - prevY) * 0.01));
+        prevX = e.clientX;
+        prevY = e.clientY;
+      });
+      window.addEventListener("pointerup", () => { isDragging = false; });
+
+      threeState = { rootGroup, heightGroup, pythagorasGroup, rightTriangleMesh, depth };
+
+      function animate() {
+        requestAnimationFrame(animate);
+        renderer.render(scene, camera);
+      }
+      animate();
+    }
+
+    function toggleHeightLayer() {
+      showHeight = !showHeight;
+      if (threeState.heightGroup) threeState.heightGroup.visible = showHeight;
+      updateToggleButtonsUI();
+    }
+
+    function togglePythagorasLayer() {
+      showPythagoras = !showPythagoras;
+      if (threeState.pythagorasGroup) threeState.pythagorasGroup.visible = showPythagoras;
+      updateToggleButtonsUI();
+    }
+
+    function updateToggleButtonsUI() {
+      const btnH = document.getElementById("btn-toggle-height");
+      btnH.className = showHeight
+        ? "text-xs px-2.5 py-1.5 rounded-lg font-semibold border bg-red-50 text-red-700 border-red-200 transition"
+        : "text-xs px-2.5 py-1.5 rounded-lg font-semibold border bg-slate-50 text-slate-600 border-slate-200 transition";
+
+      const btnP = document.getElementById("btn-toggle-pythagoras");
+      btnP.className = (activeQuestion?.three_js_params.shape === "trapezoid" ? "" : "hidden ") + (
+        showPythagoras
+          ? "text-xs px-2.5 py-1.5 rounded-lg font-semibold border bg-purple-50 text-purple-700 border-purple-200 transition"
+          : "text-xs px-2.5 py-1.5 rounded-lg font-semibold border bg-slate-50 text-slate-600 border-slate-200 transition"
+      );
+    }
+
+    function resetCameraAngle() {
+      if (threeState.rootGroup) threeState.rootGroup.rotation.set(0, 0, 0);
+    }
+
+    function updateSliceTransform(val) {
+      const p = parseFloat(val);
+      const { rightTriangleMesh, depth } = threeState;
+      if (!rightTriangleMesh) return;
+      rightTriangleMesh.position.z = -depth / 2 + Math.sin(p * Math.PI) * 0.6;
+      rightTriangleMesh.rotation.z = p * Math.PI;
+    }
+
+    function unlockNextHint() {
+      if (!activeQuestion || unlockedHintLevel >= 3) return;
+      unlockedHintLevel++;
+
+      const hint = activeQuestion.hints[unlockedHintLevel - 1];
+      if (hint.action === "SHOW_PYTHAGORAS") {
+        showPythagoras = true;
+        if (threeState.pythagorasGroup) threeState.pythagorasGroup.visible = true;
+        updateToggleButtonsUI();
+      } else if (hint.action === "SHOW_HEIGHT") {
+        showHeight = true;
+        if (threeState.heightGroup) threeState.heightGroup.visible = true;
+        updateToggleButtonsUI();
+      } else if (hint.action === "ANIMATE_SLICE") {
+        document.getElementById("slider-slice").value = 1;
+        updateSliceTransform(1);
+      }
+
+      const container = document.getElementById("hints-container");
+      container.innerHTML += `
+        <div class="p-3 rounded-xl bg-amber-50/80 border border-amber-200 text-xs text-slate-800">
+          <span class="font-bold text-amber-800">Petunjuk ${hint.level}: </span>${hint.text}
+        </div>
+      `;
+
+      const btn = document.getElementById("btn-unlock-hint");
+      if (unlockedHintLevel >= 3) {
+        btn.classList.add("hidden");
+      } else {
+        btn.textContent = `Butuh Petunjuk Bertahap? (Buka Tahap ${unlockedHintLevel + 1} dari 3)`;
+      }
+    }
+
+    document.getElementById("answer-form").addEventListener("submit", async function (e) {
+      e.preventDefault();
+      const val = parseFloat(document.getElementById("input-answer").value);
+      if (isNaN(val) || !activeQuestion) return;
+
+      const isCorrect = Math.abs(val - activeQuestion.correct_answer) < 0.01;
+      const timeSpent = Math.round((Date.now() - startTime) / 1000);
+
+      const fb = document.getElementById("feedback-box");
+      fb.classList.remove("hidden");
+
+      if (isCorrect) {
+        fb.className = "p-3.5 rounded-xl border text-xs leading-relaxed font-semibold bg-emerald-50 border-emerald-200 text-emerald-900";
+        fb.textContent = `Tepat sekali! Jawabanmu benar (${activeQuestion.correct_answer} ${activeQuestion.unit}).`;
+        showReflectionCard();
+      } else {
+        fb.className = "p-3.5 rounded-xl border text-xs leading-relaxed font-semibold bg-red-50 border-red-200 text-red-800";
+        fb.textContent = "Belum tepat. Periksa kembali ukuran pada gambar 3D atau buka Petunjuk Bertahap.";
+      }
+
+      const logEntry = {
+        timestamp: new Date().toISOString(),
+        student_code: currentStudent,
+        question_id: activeQuestion.question_id,
+        submitted_answer: val,
+        is_correct: isCorrect,
+        hints_used_count: unlockedHintLevel,
+        time_spent_sec: timeSpent
+      };
+
+      attemptLogs.push(logEntry);
+      localStorage.setItem("geotrap_attempts", JSON.stringify(attemptLogs));
+    });
+
+    function showReflectionCard() {
+      const refBox = document.getElementById("reflection-box");
+      refBox.classList.remove("hidden");
+      document.getElementById("reflection-prompt").textContent = activeQuestion.reflection.prompt;
+
+      const optContainer = document.getElementById("reflection-options");
+      optContainer.innerHTML = activeQuestion.reflection.options.map((opt, idx) => `
+        <button
+          type="button"
+          onclick="selectReflectionOption(this, ${idx === activeQuestion.reflection.correct_index})"
+          class="w-full text-left text-xs p-2.5 rounded-xl border bg-white text-slate-700 border-indigo-100 hover:border-indigo-300 transition"
+        >
+          ${opt}
+        </button>
+      `).join("");
+    }
+
+    function selectReflectionOption(btnElem, isRight) {
+      const siblings = btnElem.parentElement.querySelectorAll("button");
+      siblings.forEach((b) => {
+        b.className = "w-full text-left text-xs p-2.5 rounded-xl border bg-white text-slate-700 border-indigo-100";
+      });
+      btnElem.className = isRight
+        ? "w-full text-left text-xs p-2.5 rounded-xl border bg-emerald-600 text-white border-emerald-600 font-semibold"
+        : "w-full text-left text-xs p-2.5 rounded-xl border bg-amber-100 text-amber-900 border-amber-300";
+    }
+
+    // ===========================================================
+    // 6. EXPORT REKAP DATA PENELITIAN LENGKAP (PRE, LATIHAN, POST)
+    // ===========================================================
+    function exportAllResearchCSV() {
+      const allCodes = new Set([
+        ...Object.keys(testResults),
+        ...attemptLogs.map((a) => a.student_code)
+      ]);
+
+      if (allCodes.size === 0) {
+        alert("Belum ada data Pre-Test, Latihan, maupun Post-Test yang tersimpan.");
+        return;
+      }
+
+      const headers = [
+        "Kode_Siswa",
+        "Skor_PreTest",
+        "Benar_PreTest",
+        "Durasi_PreTest_Detik",
+        "Skor_PostTest",
+        "Benar_PostTest",
+        "Durasi_PostTest_Detik",
+        "Selisih_Skor",
+        "N_Gain",
+        "Total_Percobaan_Latihan_3D",
+        "Total_Hint_Dipakai"
+      ];
+
+      const rows = Array.from(allCodes).map((code) => {
+        const pre = testResults[code]?.pretest;
+        const post = testResults[code]?.posttest;
+        const studentAttempts = attemptLogs.filter((a) => a.student_code === code);
+        const totalHints = studentAttempts.reduce((sum, item) => sum + item.hints_used_count, 0);
+
+        const preScore = pre ? pre.score : "";
+        const postScore = post ? post.score : "";
+        const diff = (pre && post) ? (post.score - pre.score) : "";
+        const nGain = (pre && post && pre.score < 100)
+          ? ((post.score - pre.score) / (100 - pre.score)).toFixed(3)
+          : "";
+
+        return [
+          code,
+          preScore,
+          pre ? `${pre.correct_count}/${pre.total_questions}` : "",
+          pre ? pre.duration_sec : "",
+          postScore,
+          post ? `${post.correct_count}/${post.total_questions}` : "",
+          post ? post.duration_sec : "",
+          diff,
+          nGain,
+          studentAttempts.length,
+          totalHints
+        ];
+      });
+
+      const csvRows = [headers.join(","), ...rows.map((r) => r.join(","))];
+      const csvContent = "data:text/csv;charset=utf-8," + csvRows.join("\n");
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", `data_penelitian_literasi_matematika_${new Date().toISOString().slice(0,10)}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  </script>
+</body>
+</html>
